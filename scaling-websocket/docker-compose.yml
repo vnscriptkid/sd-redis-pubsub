@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  chat_redis:
+    container_name: chat_redis
+    image: redis:6.2.5
+    ports:
+      - "6378:6379"
+
+  chat_server_1:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: chat_server_1
+    environment:
+      - REDIS_HOST=chat_redis
+      - REDIS_PORT=6379
+      - SERVER_NAME=chat_server_1
+    ports:
+      - 8081:8080
+
+  chat_server_2:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: chat_server_2
+    environment:
+      - REDIS_HOST=chat_redis
+      - REDIS_PORT=6379
+      - SERVER_NAME=chat_server_2
+    ports:
+      - 8082:8080
+
+  chat_client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: chat_client
+    ports:
+      - 8080:8080

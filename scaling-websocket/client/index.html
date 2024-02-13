@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Client</title>
+    <style>
+        #messageBox {
+            width: 300px;
+            height: 200px;
+        }
+
+        input#server {
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <input id="server" type="text" placeholder="ws://localhost:8080/ws/your_id" value="ws://localhost:8081/ws/user1">
+    <button onclick="connect()">Connect</button>
+    <br/>
+    <input id="recipient" type="text" placeholder="Recipient ID">
+    <input id="message" type="text" placeholder="Message">
+    <button onclick="sendMessage()">Send</button>
+    <br/>
+    <textarea id="messageBox"></textarea>
+
+    <script>
+        var socket;
+
+        function connect() {
+            var server = document.getElementById('server').value;
+            socket = new WebSocket(server);
+            socket.onmessage = function(event) {
+                var messageBox = document.getElementById('messageBox');
+                var message = JSON.parse(event.data);
+                console.log('Message received: ', event.data)
+                messageBox.value += message?.sender?.id + ': ' + message.text + '\n';
+            };
+
+            socket.onopen = function(event) {
+                console.log('WebSocket connection established');
+                // You can perform any actions needed when the WebSocket connection is successfully opened
+            };
+
+            socket.onclose = function(event) {
+                console.log('WebSocket connection closed');
+                // You can handle any cleanup or reconnection logic here
+            };
+
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                // You can handle any error conditions here
+            };
+        }
+        
+        function sendMessage() {
+            var server = document.getElementById('server').value;
+            var userId = server.split('/').pop();
+            var recipientInput = document.getElementById('recipient');
+            var messageInput = document.getElementById('message');
+            var message = {
+                Sender: {ID: userId}, // leave it blank, the server will fill this in
+                Recipient: {ID: recipientInput.value},
+                Text: messageInput.value
+            };
+            socket.send(JSON.stringify(message));
+            messageInput.value = '';
+        }
+    </script>
+</body>
+</html>
