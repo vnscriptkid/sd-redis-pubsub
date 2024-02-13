@@ -1,0 +1,8 @@
+version: '3.9'
+
+services:
+  redis:
+    container_name: rpubsub
+    image: redis:6.2.5
+    ports:
+      - "6378:6379"
