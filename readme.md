@@ -3,6 +3,7 @@
 ## Ref
 - https://socket.io/docs/v4/tutorial/step-9
 - https://github.com/socketio/socket.io-redis-adapter
+- https://socket.io/get-started/private-messaging-part-4/
 
 ## Message stream vs realtime pubsub
 | - | Message stream | Realtime pubsub |
@@ -20,3 +21,4 @@
 - Implement Chatroom feature
   - w/out Redis pubsub
 - Test limit of websocket connections per 1 server
+  
