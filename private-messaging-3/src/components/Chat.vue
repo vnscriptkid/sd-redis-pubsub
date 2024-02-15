@@ -68,24 +68,31 @@ export default {
     });
 
     const initReactiveProperties = (user) => {
-      user.connected = true;
-      user.messages = [];
       user.hasNewMessages = false;
     };
 
+    // server notifies newly connected user with the list of all connected users
     socket.on("users", (users) => {
       users.forEach((user) => {
+        user.msgs.forEach((message) => {
+          message.fromSelf = message.from === socket.userID;
+        });
+        
         for (let i = 0; i < this.users.length; i++) {
           const existingUser = this.users[i];
           if (existingUser.userID === user.userID) {
             existingUser.connected = user.connected;
+            existingUser.messages = user.msgs;
             return;
           }
         }
         
         user.self = user.userID === socket.userID;
         initReactiveProperties(user);
-        this.users.push(user);
+        this.users.push({
+          ...user,
+          messages: user.msgs,
+        });
       });
       // put the current user first, and sort by username
       this.users.sort((a, b) => {
@@ -105,7 +112,10 @@ export default {
         }
       }
       initReactiveProperties(user);
-      this.users.push(user);
+      this.users.push({
+        ...user,
+        messages: user.msgs,
+      });
     });
 
     socket.on("user disconnected", (id) => {

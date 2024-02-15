@@ -14,6 +14,9 @@ const randomId = () => crypto.randomBytes(8).toString("hex");
 const { InMemorySessionStore } = require("./sessionStore");
 const sessionStore = new InMemorySessionStore();
 
+const { InMemoryMessageStore } = require("./messageStore");
+const messageStore = new InMemoryMessageStore();
+
 // register a middleware which checks the username and allows the connection
 io.use((socket, next) => {
   const sessionID = socket.handshake.auth.sessionID;
@@ -60,23 +63,39 @@ io.on("connection", (socket) => {
   
   // fetch existing users
   const users = [];
-  
+
+  const messagesPerUser = new Map();
+  messageStore.findMessagesForUser(socket.userID).forEach((message) => {
+    const { from, to } = message;
+    const otherUser = socket.userID === from ? to : from;
+    if (messagesPerUser.has(otherUser)) {
+      messagesPerUser.get(otherUser).push(message);
+    } else {
+      messagesPerUser.set(otherUser, [message]);
+    }
+  });
+
   sessionStore.findAllSessions().forEach((session) => {
+    const messages = messagesPerUser.get(session.userID) || [];
+    
     users.push({
       userID: session.userID,
       username: session.username,
       connected: session.connected,
+      msgs: messages,
     });
   });
 
+  // notify the new user about the existing users
   socket.emit("users", users);
   console.log(`Emit "users" event to new user with username: ${socket.username}`)
 
-  // notify existing users
+  // notify existing users about the new user
   socket.broadcast.emit("user connected", {
     userID: socket.userID,
     username: socket.username,
     connected: true,
+    msgs: [],
   });
   console.log(`Emit "user connected" event to all existing users`)
 
@@ -85,11 +104,14 @@ io.on("connection", (socket) => {
     // Given each user is in a separate room identified by their userID
     // We can use to as the room name to emit to a specific user
     
-    socket.to(to).to(socket.userID).emit("private message", {
+    const message = {
       content,
       from: socket.userID,
       to,
-    });
+    };
+    
+    socket.to(to).to(socket.userID).emit("private message", message);
+    messageStore.saveMessage(message);
     console.log(`>>> On "private message" event, emit to recipient with ID: ${to}`)
   });
 
