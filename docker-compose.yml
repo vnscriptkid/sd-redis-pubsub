@@ -5,4 +5,4 @@ services:
     container_name: rpubsub
     image: redis:6.2.5
     ports:
-      - "6378:6379"
+      - "6379:6379"
